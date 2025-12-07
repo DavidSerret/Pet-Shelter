@@ -6,6 +6,7 @@ use App\Http\Controllers\PetController;
 use App\Http\Controllers\AdoptionRequestController;
 use App\Models\Pet;
 use Illuminate\Support\Facades\Route;
+use App\Models\QuizQuestion;
 
 // Public routes
 Route::get('/', function () {
@@ -40,6 +41,12 @@ Route::get('/terms', function () {
     return view('terms-conditions');
 })->name('terms');
 
+Route::get('/api/quiz/questions', function () {
+    return QuizQuestion::where('is_active', true)
+        ->orderBy('order')
+        ->get();
+});
+
 // Authentication routes
 Route::get('/signin', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/signin', [AuthController::class, 'login']);
@@ -59,6 +66,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/adoption-requests/{adoptionRequest}', [AdoptionRequestController::class, 'show'])->name('adoption-requests.show');
     Route::delete('/adoption-requests/{adoptionRequest}', [AdoptionRequestController::class, 'destroy'])->name('adoption-requests.destroy');
 });
+
+
+Route::get('/quiz', [AuthController::class, 'quiz'])->name('quiz');
+
 
 // Admin-only routes
 Route::middleware(['auth', 'role:admin'])->group(function () {
