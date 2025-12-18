@@ -10,6 +10,9 @@ class PetController extends Controller
 {
     public function create()
     {
+        // Authorize admin-only access
+        $this->authorize('create', Pet::class);
+        
         return view('pets.create');
     }
 
@@ -42,6 +45,9 @@ class PetController extends Controller
 
     public function update(Request $request, Pet $pet)
     {
+        // Authorize admin-only access
+        $this->authorize('update', $pet);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'species' => 'required|string|max:255',
@@ -68,6 +74,9 @@ class PetController extends Controller
 
     public function destroy(Pet $pet)
     {
+        // Authorize admin-only access
+        $this->authorize('delete', $pet);
+        
         if ($pet->image_url && Storage::disk('public')->exists(str_replace('/storage/', '', $pet->image_url))) {
             Storage::disk('public')->delete(str_replace('/storage/', '', $pet->image_url));
         }
@@ -87,13 +96,22 @@ class PetController extends Controller
 
     public function getPetsJson(Request $request)
     {
+        // Validate query parameters to prevent injection
+        $validated = $request->validate([
+            'show_all' => 'nullable|in:true,false,1,0',
+        ]);
+        
         $query = Pet::query();
         
         // Check if we should show all statuses (for admin gallery)
-        $showAll = $request->query('show_all', false);
+        $showAll = $validated['show_all'] ?? false;
         
         if ($showAll === 'true' || $showAll === '1') {
             // Admin view - show all pets regardless of status
+            // Verify user is admin
+            if (!auth()->check() || !auth()->user()->isAdmin()) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
             $pets = $query->get();
         } else {
             // Public view - only show available pets (hide adopted and pending ones)
