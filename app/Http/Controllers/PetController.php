@@ -96,10 +96,24 @@ class PetController extends Controller
 
     public function getPetsJson(Request $request)
     {
-        // Validate query parameters to prevent injection
+        // Validate ALL query parameters to prevent injection attacks
         $validated = $request->validate([
             'show_all' => 'nullable|in:true,false,1,0',
+            'available' => 'nullable|in:true,false,1,0',
+            'species' => 'nullable|string|max:255',
+            'status' => 'nullable|in:available,adopted,pending',
         ]);
+        
+        // Reject any unexpected query parameters
+        $allowedParams = ['show_all', 'available', 'species', 'status'];
+        $invalidParams = array_diff(array_keys($request->query()), $allowedParams);
+        
+        if (!empty($invalidParams)) {
+            return response()->json([
+                'error' => 'Invalid query parameters',
+                'invalid_params' => $invalidParams
+            ], 400);
+        }
         
         $query = Pet::query();
         
