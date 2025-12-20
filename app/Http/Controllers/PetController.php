@@ -98,20 +98,26 @@ class PetController extends Controller
     {
         // Additional security: Check for SQL injection patterns in raw query string
         $rawQuery = $request->server('QUERY_STRING', '');
+        
+        // Decode URL encoding to catch encoded attacks
+        $decodedQuery = urldecode($rawQuery);
+        
+        // SQL injection patterns to detect
         $sqlPatterns = [
-            "/'.*OR.*/i",           // Matches: ' OR, ' or
-            "/'.*AND.*/i",          // Matches: ' AND, ' and
-            '/--/',                 // SQL comment
-            '/;.*DROP/i',           // DROP statements
-            '/;.*DELETE/i',         // DELETE statements
-            '/;.*UPDATE/i',         // UPDATE statements
-            '/;.*INSERT/i',         // INSERT statements
-            '/UNION.*SELECT/i',     // UNION attacks
-            '/\/\*.*\*\//i',        // SQL block comments
+            '/(%27)|(\')|(%23)|(#)/i',  // Single quotes and hash (URL encoded and raw)
+            '/(%2D%2D)|(\-\-)/i',        // SQL comments (-- encoded and raw)
+            '/((%27)|(\'))\s*or/i',      // ' OR or %27 OR (case insensitive)
+            '/((%27)|(\'))\s*and/i',     // ' AND or %27 AND
+            '/union.*select/i',          // UNION SELECT attacks
+            '/drop\s+table/i',           // DROP TABLE
+            '/delete\s+from/i',          // DELETE FROM
+            '/update\s+.*set/i',         // UPDATE SET
+            '/insert\s+into/i',          // INSERT INTO
+            '/(\/\*)|(\*\/)|(%2F%2A)|(%2A%2F)/i', // Block comments
         ];
         
         foreach ($sqlPatterns as $pattern) {
-            if (preg_match($pattern, $rawQuery)) {
+            if (preg_match($pattern, $decodedQuery)) {
                 return response()->json([
                     'error' => 'Potential SQL injection detected',
                     'message' => 'Invalid request parameters'
