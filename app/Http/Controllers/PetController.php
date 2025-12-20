@@ -96,11 +96,34 @@ class PetController extends Controller
 
     public function getPetsJson(Request $request)
     {
+        // Additional security: Check for SQL injection patterns in raw query string
+        $rawQuery = $request->server('QUERY_STRING', '');
+        $sqlPatterns = [
+            "/'.*OR.*/i",           // Matches: ' OR, ' or
+            "/'.*AND.*/i",          // Matches: ' AND, ' and
+            '/--/',                 // SQL comment
+            '/;.*DROP/i',           // DROP statements
+            '/;.*DELETE/i',         // DELETE statements
+            '/;.*UPDATE/i',         // UPDATE statements
+            '/;.*INSERT/i',         // INSERT statements
+            '/UNION.*SELECT/i',     // UNION attacks
+            '/\/\*.*\*\//i',        // SQL block comments
+        ];
+        
+        foreach ($sqlPatterns as $pattern) {
+            if (preg_match($pattern, $rawQuery)) {
+                return response()->json([
+                    'error' => 'Potential SQL injection detected',
+                    'message' => 'Invalid request parameters'
+                ], 400);
+            }
+        }
+        
         // Validate ALL query parameters to prevent injection attacks
         $validated = $request->validate([
             'show_all' => 'nullable|in:true,false,1,0',
             'available' => 'nullable|in:true,false,1,0',
-            'species' => 'nullable|string|max:255',
+            'species' => 'nullable|string|max:255|alpha',
             'status' => 'nullable|in:available,adopted,pending',
         ]);
         
