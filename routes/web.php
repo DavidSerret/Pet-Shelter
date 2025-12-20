@@ -63,8 +63,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/adoption-requests/my-requests', [AdoptionRequestController::class, 'myRequests'])->name('adoption-requests.my-requests');
     Route::get('/pets/{pet}/adopt', [AdoptionRequestController::class, 'create'])->name('adoption-requests.create');
     Route::post('/adoption-requests', [AdoptionRequestController::class, 'store'])->name('adoption-requests.store');
-    Route::get('/adoption-requests/{adoptionRequest}', [AdoptionRequestController::class, 'show'])->name('adoption-requests.show');
-    Route::delete('/adoption-requests/{adoptionRequest}', [AdoptionRequestController::class, 'destroy'])->name('adoption-requests.destroy');
+    
+    // Protected with ownership verification middleware
+    Route::get('/adoption-requests/{adoptionRequest}', [AdoptionRequestController::class, 'show'])
+        ->middleware('verify.adoption.owner')
+        ->name('adoption-requests.show');
+    Route::delete('/adoption-requests/{adoptionRequest}', [AdoptionRequestController::class, 'destroy'])
+        ->middleware('verify.adoption.owner')
+        ->name('adoption-requests.destroy');
 });
 
 
@@ -91,9 +97,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/admin/adoption-requests/{adoptionRequest}/status', [AdoptionRequestController::class, 'updateStatus'])->name('admin.adoption-requests.update-status');
 });
 
-// Legacy route for backwards compatibility - now uses database
+// Legacy route for backwards compatibility
 Route::get('/pet/{id}', function ($id) {
-    $pet = Pet::find($id);
+    // Validate ID is numeric to prevent injection
+    if (!is_numeric($id)) {
+        abort(404);
+    }
+    
+    $pet = Pet::find((int)$id);
     
     if (!$pet) {
         return redirect('/home')->with('error', 'Pet not found');
