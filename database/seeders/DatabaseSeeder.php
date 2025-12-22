@@ -1,78 +1,139 @@
+
 <?php
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Pet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\File;
+use App\Models\User;
+use App\Models\Pet;
+
+// Additional seeders
+use Database\Seeders\QuizQuestionsSeeder;
+use Database\Seeders\AdoptionRequestSeeder;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Run the database seeders.
+     */
     public function run(): void
     {
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@happinest.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
+        $this->seedUsers();
+
+        $this->seedPetsFromJsonOrSamples();
+
+        $this->call([
+            QuizQuestionsSeeder::class,
+            AdoptionRequestSeeder::class,
+            // more
         ]);
 
-        User::create([
-            'name' => 'John Doe',
-            'email' => 'john@happinest.com',
-            'password' => Hash::make('password123'),
-            'role' => 'user',
-        ]);
+        $this->command->info('✅ Database seeded successfully!');
+    }
 
-        User::create([
-            'name' => 'Jane Smith',
-            'email' => 'jane@happinest.com',
-            'password' => Hash::make('password123'),
-            'role' => 'user',
-        ]);
+    /**
+     * Siembra usuarios de forma idempotente (updateOrCreate).
+     */
+    private function seedUsers(): void
+    {
+        User::updateOrCreate(
+            ['email' => 'admin@happinest.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+            ]
+        );
 
+        User::updateOrCreate(
+            ['email' => 'john@happinest.com'],
+            [
+                'name' => 'John Doe',
+                'password' => Hash::make('password123'),
+                'role' => 'user',
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'jane@happinest.com'],
+            [
+                'name' => 'Jane Smith',
+                'password' => Hash::make('password123'),
+                'role' => 'user',
+            ]
+        );
+
+        $this->command->info('👤 Users seeded (idempotent).');
+    }
+
+    private function seedPetsFromJsonOrSamples(): void
+    {
         $jsonPath = public_path('assets/animals.json');
-        
-        if (file_exists($jsonPath)) {
-            $animals = json_decode(file_get_contents($jsonPath), true);
-            
-            foreach ($animals as $animal) {
-                Pet::create([
-                    'name' => $animal['name'],
-                    'species' => $animal['species'],
-                    'age' => $animal['age'],
-                    'sex' => $animal['sex'],
-                    'image_url' => $animal['imageUrl'] ?? null,
-                    'description' => $animal['description'] ?? null,
-                    'status' => 'available',
-                ]);
+
+        if (File::exists($jsonPath)) {
+            $content = File::get($jsonPath);
+
+            try {
+                $animals = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                $this->command->warn('⚠️ Invalid animals.json: ' . $e->getMessage());
+                $animals = [];
             }
-            
-            $this->command->info('Pets imported from JSON successfully!');
+
+            $count = 0;
+            foreach ($animals as $animal) {
+                $name        = $animal['name']     ?? null;
+                $species     = $animal['species']  ?? null;
+                $age         = $animal['age']      ?? null;
+                $sex         = $animal['sex']      ?? null;
+                $imageUrl    = $animal['imageUrl'] ?? null;
+                $description = $animal['description'] ?? null;
+
+                if (!$name || !$species) {
+                    continue;
+                }
+
+                Pet::updateOrCreate(
+                    ['name' => $name, 'species' => $species],
+                    [
+                        'age'        => $age,
+                        'sex'        => $sex,
+                        'image_url'  => $imageUrl,
+                        'description'=> $description,
+                        'status'     => 'available',
+                    ]
+                );
+
+                $count++;
+            }
+
+            $this->command->info("🐾 Pets imported from JSON successfully! ({$count} records)");
         } else {
-            $this->command->warn('Animals JSON file not found. Creating sample pets...');
-            
-            // Create sample pets if JSON doesn't exist
-            Pet::create([
-                'name' => 'Max',
-                'species' => 'Dog',
-                'age' => 3,
-                'sex' => 'Male',
-                'description' => 'Friendly and energetic dog looking for a loving home.',
-                'status' => 'available',
-            ]);
+            $this->command->warn('⚠️ Animals JSON file not found. Creating sample pets...');
 
-            Pet::create([
-                'name' => 'Whiskers',
-                'species' => 'Cat',
-                'age' => 2,
-                'sex' => 'Female',
-                'description' => 'Calm and affectionate cat who loves to cuddle.',
-                'status' => 'available',
-            ]);
+            Pet::updateOrCreate(
+                ['name' => 'Max', 'species' => 'Dog'],
+                [
+                    'age' => 3,
+                    'sex' => 'Male',
+                    'description' => 'Friendly and energetic dog looking for a loving home.',
+                    'status' => 'available',
+                ]
+            );
+
+            Pet::updateOrCreate(
+                ['name' => 'Whiskers', 'species' => 'Cat'],
+                [
+                    'age' => 2,
+                    'sex' => 'Female',
+                    'description' => 'Calm and affectionate cat who loves to cuddle.',
+                    'status' => 'available',
+                ]
+            );
+
+            $this->command->info('🐾 Sample pets created.');
         }
-
-        $this->command->info('Database seeded successfully!');
     }
 }
