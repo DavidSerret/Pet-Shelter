@@ -27,5 +27,10 @@ class AppServiceProvider extends ServiceProvider
         // Register policies for authorization
         Gate::policy(AdoptionRequest::class, AdoptionRequestPolicy::class);
         Gate::policy(Pet::class, PetPolicy::class);
+        
+        // Solve css error for productions
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }
