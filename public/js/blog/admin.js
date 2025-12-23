@@ -195,4 +195,116 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Debug: Log when file is loaded
     console.log('Blog admin JS loaded successfully');
+
+    // Newsletter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Newsletter checkbox toggle
+        const sendToNewsletter = document.getElementById('send_to_newsletter');
+        const newsletterOptions = document.getElementById('newsletter-options');
+        
+        if (sendToNewsletter && newsletterOptions) {
+            sendToNewsletter.addEventListener('change', function() {
+                newsletterOptions.style.display = this.checked ? 'block' : 'none';
+                
+                // If unchecking, also hide schedule datetime
+                if (!this.checked) {
+                    const scheduleDatetime = document.getElementById('schedule-datetime');
+                    if (scheduleDatetime) {
+                        scheduleDatetime.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Trigger on load if checked
+            if (sendToNewsletter.checked) {
+                newsletterOptions.style.display = 'block';
+            }
+        }
+        
+        // Newsletter send option toggle
+        const sendOptionRadios = document.querySelectorAll('input[name="newsletter_send_option"]');
+        const scheduleDatetime = document.getElementById('schedule-datetime');
+        
+        if (sendOptionRadios.length > 0 && scheduleDatetime) {
+            sendOptionRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'schedule') {
+                        scheduleDatetime.style.display = 'block';
+                        
+                        // Set min date to now
+                        const datetimeInput = document.getElementById('newsletter_scheduled_at');
+                        if (datetimeInput) {
+                            const now = new Date();
+                            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                            datetimeInput.min = now.toISOString().slice(0, 16);
+                            
+                            // Set default to 1 hour from now if empty
+                            if (!datetimeInput.value) {
+                                const oneHourLater = new Date(now);
+                                oneHourLater.setHours(oneHourLater.getHours() + 1);
+                                datetimeInput.value = oneHourLater.toISOString().slice(0, 16);
+                            }
+                        }
+                    } else {
+                        scheduleDatetime.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Set initial state
+            const selectedOption = document.querySelector('input[name="newsletter_send_option"]:checked');
+            if (selectedOption && selectedOption.value === 'schedule') {
+                scheduleDatetime.style.display = 'block';
+            }
+        }
+        
+        // Validate newsletter form
+        const newsletterForm = document.querySelector('form');
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', function(e) {
+                const sendToNewsletter = document.getElementById('send_to_newsletter');
+                const sendOption = document.querySelector('input[name="newsletter_send_option"]:checked');
+                const scheduledAt = document.getElementById('newsletter_scheduled_at');
+                
+                if (sendToNewsletter && sendToNewsletter.checked) {
+                    if (!sendOption) {
+                        e.preventDefault();
+                        alert('Please select a newsletter send option.');
+                        return false;
+                    }
+                    
+                    if (sendOption.value === 'schedule' && (!scheduledAt || !scheduledAt.value)) {
+                        e.preventDefault();
+                        alert('Please select a date and time for the scheduled newsletter.');
+                        return false;
+                    }
+                    
+                    if (sendOption.value === 'schedule' && scheduledAt.value) {
+                        const scheduledDate = new Date(scheduledAt.value);
+                        const now = new Date();
+                        
+                        if (scheduledDate <= now) {
+                            e.preventDefault();
+                            alert('Scheduled date must be in the future.');
+                            return false;
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Auto-check send to newsletter if post is published
+        const isPublished = document.getElementById('is_published');
+        if (isPublished && sendToNewsletter) {
+            isPublished.addEventListener('change', function() {
+                if (this.checked && !sendToNewsletter.checked) {
+                    // Suggest sending to newsletter when publishing
+                    if (confirm('Would you like to send this post to newsletter subscribers?')) {
+                        sendToNewsletter.checked = true;
+                        sendToNewsletter.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+        }
+    });
 });

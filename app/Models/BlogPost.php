@@ -20,11 +20,17 @@ class BlogPost extends Model
         'is_published',
         'published_at',
         'user_id',
+        'send_to_newsletter',        // Nuevo
+        'newsletter_scheduled_at',   // Nuevo
+        'newsletter_sent_at',        // Nuevo
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
         'published_at' => 'datetime',
+        'send_to_newsletter' => 'boolean',          // Nuevo
+        'newsletter_scheduled_at' => 'datetime',    // Nuevo
+        'newsletter_sent_at' => 'datetime',         // Nuevo
     ];
 
     /**
@@ -83,5 +89,42 @@ class BlogPost extends Model
     {
         return $query->where('is_published', false)
             ->orWhereNull('published_at');
+    }
+
+    /**
+     * Scope for posts that should be sent to newsletter.
+     */
+    public function scopeForNewsletter($query)
+    {
+        return $query->where('send_to_newsletter', true)
+            ->whereNull('newsletter_sent_at');
+    }
+
+    /**
+     * Check if newsletter is scheduled.
+     */
+    public function isNewsletterScheduled(): bool
+    {
+        return $this->send_to_newsletter && 
+               $this->newsletter_scheduled_at && 
+               !$this->newsletter_sent_at;
+    }
+
+    /**
+     * Check if newsletter should be sent immediately.
+     */
+    public function isNewsletterImmediate(): bool
+    {
+        return $this->send_to_newsletter && 
+               !$this->newsletter_scheduled_at && 
+               !$this->newsletter_sent_at;
+    }
+
+    /**
+     * Check if newsletter has been sent.
+     */
+    public function isNewsletterSent(): bool
+    {
+        return (bool) $this->newsletter_sent_at;
     }
 }

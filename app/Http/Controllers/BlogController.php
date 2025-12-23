@@ -6,6 +6,7 @@ use App\Models\BlogPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class BlogController extends Controller
 {
@@ -64,17 +65,34 @@ class BlogController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:blog_posts,slug',
+            'slug' => 'nullable|string|max:255|unique:blog_posts,slug,NULL,id,deleted_at,NULL',
             'description' => 'required|string|max:500',
             'content' => 'required|string',
             'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_published' => 'boolean',
+            'send_to_newsletter' => 'boolean',
+            'newsletter_send_option' => 'nullable|in:now,schedule',
+            'newsletter_scheduled_at' => 'nullable|date|after:now',
         ]);
 
         // Handle image upload
         $imagePath = null;
         if ($request->hasFile('featured_image')) {
             $imagePath = $request->file('featured_image')->store('blog-images', 'public');
+        }
+
+        // Handle newsletter scheduling
+        $newsletterScheduledAt = null;
+        $newsletterSentAt = null;
+        
+        if ($validated['send_to_newsletter'] ?? false) {
+            if (($validated['newsletter_send_option'] ?? 'now') === 'schedule' && 
+                isset($validated['newsletter_scheduled_at'])) {
+                $newsletterScheduledAt = Carbon::parse($validated['newsletter_scheduled_at']);
+            } else {
+                // Send immediately - will be handled by job/queue
+                $newsletterSentAt = null; // Will be set when actually sent
+            }
         }
 
         $post = BlogPost::create([
@@ -85,11 +103,31 @@ class BlogController extends Controller
             'featured_image' => $imagePath,
             'is_published' => $validated['is_published'] ?? false,
             'published_at' => ($validated['is_published'] ?? false) ? now() : null,
+            'send_to_newsletter' => $validated['send_to_newsletter'] ?? false,
+            'newsletter_scheduled_at' => $newsletterScheduledAt,
+            'newsletter_sent_at' => $newsletterSentAt,
             'user_id' => Auth::id(),
         ]);
 
+        // Handle immediate newsletter sending (if requested)
+        if ($post->isNewsletterImmediate()) {
+            // We'll implement this later with the NewsletterService
+            // NewsletterService::sendImmediately($post);
+        }
+
+        $successMessage = 'Blog post ' . ($post->is_published ? 'published' : 'saved as draft') . ' successfully!';
+        
+        if ($post->send_to_newsletter) {
+            if ($post->newsletter_scheduled_at) {
+                $scheduledDate = $post->newsletter_scheduled_at->format('M j, Y \a\t g:i A');
+                $successMessage .= " Newsletter scheduled for {$scheduledDate}.";
+            } else {
+                $successMessage .= ' Newsletter will be sent to subscribers.';
+            }
+        }
+
         return redirect()->route('admin.blog.index')
-            ->with('success', 'Blog post ' . ($post->is_published ? 'published' : 'saved as draft') . ' successfully!');
+            ->with('success', $successMessage);
     }
 
     /**
@@ -107,11 +145,14 @@ class BlogController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:blog_posts,slug,' . $post->id,
+            'slug' => 'nullable|string|max:255|unique:blog_posts,slug,' . $post->id . ',id,deleted_at,NULL',
             'description' => 'required|string|max:500',
             'content' => 'required|string',
             'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_published' => 'boolean',
+            'send_to_newsletter' => 'boolean',
+            'newsletter_send_option' => 'nullable|in:now,schedule',
+            'newsletter_scheduled_at' => 'nullable|date|after:now',
         ]);
 
         // Handle image upload
@@ -131,6 +172,27 @@ class BlogController extends Controller
         $isPublishing = ($validated['is_published'] ?? false) && !$post->is_published;
         $isUnpublishing = !($validated['is_published'] ?? false) && $post->is_published;
 
+        // Handle newsletter scheduling
+        $newsletterScheduledAt = $post->newsletter_scheduled_at;
+        $newsletterSentAt = $post->newsletter_sent_at;
+        
+        if ($validated['send_to_newsletter'] ?? false) {
+            // Only update if newsletter hasn't been sent yet
+            if (!$post->newsletter_sent_at) {
+                if (($validated['newsletter_send_option'] ?? 'now') === 'schedule' && 
+                    isset($validated['newsletter_scheduled_at'])) {
+                    $newsletterScheduledAt = Carbon::parse($validated['newsletter_scheduled_at']);
+                    $newsletterSentAt = null;
+                } elseif (($validated['newsletter_send_option'] ?? 'now') === 'now') {
+                    $newsletterScheduledAt = null;
+                    $newsletterSentAt = null; // Will be set when sent
+                }
+            }
+        } else {
+            // If unchecking newsletter, clear scheduling
+            $newsletterScheduledAt = null;
+        }
+
         $updateData = [
             'title' => strip_tags($validated['title']),
             'slug' => $validated['slug'] ?? $post->slug,
@@ -138,6 +200,9 @@ class BlogController extends Controller
             'content' => $validated['content'],
             'featured_image' => $validated['featured_image'],
             'is_published' => $validated['is_published'] ?? false,
+            'send_to_newsletter' => $validated['send_to_newsletter'] ?? false,
+            'newsletter_scheduled_at' => $newsletterScheduledAt,
+            'newsletter_sent_at' => $newsletterSentAt,
         ];
 
         // Update published_at based on status changes
@@ -152,7 +217,23 @@ class BlogController extends Controller
 
         $post->update($updateData);
 
+        // Handle immediate newsletter sending (if requested and not already sent)
+        if ($post->isNewsletterImmediate() && !$post->newsletter_sent_at) {
+            // We'll implement this later with the NewsletterService
+            // NewsletterService::sendImmediately($post);
+        }
+
         $statusMessage = $isPublishing ? 'published' : ($isUnpublishing ? 'unpublished and saved as draft' : 'updated');
+        
+        if ($post->send_to_newsletter && !$post->newsletter_sent_at) {
+            if ($post->newsletter_scheduled_at) {
+                $scheduledDate = $post->newsletter_scheduled_at->format('M j, Y \a\t g:i A');
+                $statusMessage .= ". Newsletter scheduled for {$scheduledDate}";
+            } else {
+                $statusMessage .= '. Newsletter will be sent to subscribers';
+            }
+        }
+
         return redirect()->route('admin.blog.index')
             ->with('success', "Blog post {$statusMessage} successfully!");
     }

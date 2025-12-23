@@ -15,6 +15,14 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'providers' => [
+        Resend\Laravel\ResendServiceProvider::class,
+    ],
+
+    'aliases' => [
+        'Resend' => Resend\Laravel\Facades\Resend::class,
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

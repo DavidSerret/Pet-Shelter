@@ -510,6 +510,63 @@ textarea.form-control {
     margin-right: auto;
 }
 
+/* Newsletter Styles */
+.newsletter-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #17a2b8;
+    margin-bottom: 1.5rem;
+}
+
+.newsletter-section h3 {
+    color: #17a2b8;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.newsletter-options {
+    margin-top: 1rem;
+}
+
+.newsletter-option-group {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.newsletter-status {
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.newsletter-status-sent {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.newsletter-status-scheduled {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Responsive newsletter options */
+@media (max-width: 768px) {
+    .newsletter-option-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .blog-admin-container,
