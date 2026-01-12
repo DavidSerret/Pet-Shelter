@@ -202,28 +202,6 @@
     margin: 0.5rem 0 0 0;
 }
 
-/* Fix for body scroll when popup is open */
-body.popup-open {
-    overflow: hidden;
-    height: 100vh;
-}
-
-/* Ensure popup is above everything */
-.download-popup-overlay {
-    z-index: 10000 !important;
-}
-
-/* Fix for trigger button z-index */
-#popupTriggerBtn {
-    z-index: 9999 !important;
-}
-
-/* Ensure popup content doesn't affect body scroll */
-.download-popup-content {
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -244,10 +222,16 @@ body.popup-open {
 /* Responsive Design */
 @media (max-width: 640px) {
     .download-popup-content {
-        max-height: 85vh;
+        padding: 1.5rem;
+        width: 95%;
     }
     
     .download-options {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .download-popup-header h3 {
+        font-size: 1.3rem;
     }
 }
