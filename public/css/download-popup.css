@@ -1,3 +1,4 @@
+/* Download Popup Styles */
 .download-popup-overlay {
     position: fixed;
     top: 0;
@@ -17,7 +18,7 @@
     background: white;
     padding: 2rem;
     border-radius: 16px;
-    max-width: 600px;
+    max-width: 500px; /* Reduced from 600px */
     width: 90%;
     position: relative;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -52,37 +53,32 @@
 
 .download-popup-header {
     text-align: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 1.5rem; /* Reduced from 2rem */
 }
 
 .download-popup-header h3 {
     color: #333;
-    margin: 0 0 0.5rem 0;
-    font-size: 1.5rem;
-}
-
-.download-popup-header p {
-    color: #666;
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.5rem;
 }
 
 .download-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Reduced from 250px */
+    gap: 1rem; /* Reduced from 1.5rem */
+    margin: 1.5rem 0; /* Reduced from 2rem */
 }
 
 .download-card {
     border: 1px solid #e0e0e0;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1.25rem; /* Reduced from 1.5rem */
     text-align: center;
     transition: all 0.3s ease;
     background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px; /* Fixed height for consistency */
 }
 
 .download-card:hover {
@@ -92,28 +88,24 @@
 }
 
 .download-card-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
+    font-size: 2rem; /* Reduced from 2.5rem */
+    margin-bottom: 0.75rem; /* Reduced from 1rem */
 }
 
 .download-card h4 {
     color: #333;
     margin: 0 0 0.5rem 0;
-    font-size: 1.2rem;
+    font-size: 1.1rem; /* Reduced from 1.2rem */
+    min-height: 2.2rem; /* Fixed height for title */
 }
 
 .download-card p {
     color: #666;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* Reduced from 0.9rem */
     margin: 0 0 1rem 0;
     line-height: 1.4;
-}
-
-.download-card small {
-    color: #999;
-    font-size: 0.8rem;
-    display: block;
-    margin-top: 0.5rem;
+    flex-grow: 1; /* Allow paragraph to grow */
+    min-height: 2.8rem; /* Fixed height for description */
 }
 
 .btn-download {
@@ -123,7 +115,7 @@
     gap: 0.5rem;
     background: linear-gradient(135deg, #AC5512, #8a4510);
     color: white;
-    padding: 0.75rem 1.5rem;
+    padding: 0.65rem 1.25rem; /* Reduced from 0.75rem 1.5rem */
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
@@ -131,7 +123,10 @@
     cursor: pointer;
     transition: all 0.3s ease;
     width: 100%;
-    font-size: 1rem;
+    font-size: 0.95rem; /* Reduced from 1rem */
+    box-sizing: border-box; /* Ensure padding is included in width */
+    max-width: 180px; /* Limit button width */
+    margin: 0 auto; /* Center button */
 }
 
 .btn-download:hover {
@@ -141,11 +136,11 @@
 }
 
 .download-icon {
-    font-size: 1.2rem;
+    font-size: 1.1rem; /* Reduced from 1.2rem */
 }
 
 .download-popup-footer {
-    margin-top: 2rem;
+    margin-top: 1.5rem; /* Reduced from 2rem */
     padding-top: 1.5rem;
     border-top: 1px solid #eee;
     text-align: center;
@@ -157,8 +152,8 @@
     justify-content: center;
     cursor: pointer;
     color: #666;
-    font-size: 0.95rem;
-    margin-bottom: 1rem;
+    font-size: 0.9rem; /* Reduced from 0.95rem */
+    margin: 0;
 }
 
 .checkbox-container input {
@@ -167,12 +162,12 @@
 
 .checkmark {
     display: inline-block;
-    width: 20px;
-    height: 20px;
+    width: 18px; /* Reduced from 20px */
+    height: 18px; /* Reduced from 20px */
     background: #f5f5f5;
     border: 2px solid #ddd;
     border-radius: 4px;
-    margin-right: 0.75rem;
+    margin-right: 0.5rem; /* Reduced from 0.75rem */
     position: relative;
     transition: all 0.2s ease;
 }
@@ -186,7 +181,7 @@
     content: "✓";
     position: absolute;
     color: white;
-    font-size: 14px;
+    font-size: 12px; /* Reduced from 14px */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -194,12 +189,6 @@
 
 .checkbox-container:hover .checkmark {
     border-color: #AC5512;
-}
-
-.popup-note {
-    color: #999;
-    font-size: 0.85rem;
-    margin: 0.5rem 0 0 0;
 }
 
 /* Fix for body scroll when popup is open */
@@ -211,11 +200,6 @@ body.popup-open {
 /* Ensure popup is above everything */
 .download-popup-overlay {
     z-index: 10000 !important;
-}
-
-/* Fix for trigger button z-index */
-#popupTriggerBtn {
-    z-index: 9999 !important;
 }
 
 /* Ensure popup content doesn't affect body scroll */
@@ -244,10 +228,50 @@ body.popup-open {
 /* Responsive Design */
 @media (max-width: 640px) {
     .download-popup-content {
-        max-height: 85vh;
+        padding: 1.5rem;
+        width: 95%;
+        max-width: 350px; /* Smaller on mobile */
     }
     
     .download-options {
         grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+    
+    .download-popup-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .download-card {
+        padding: 1rem;
+        min-height: 200px;
+    }
+    
+    .download-card h4 {
+        font-size: 1rem;
+    }
+    
+    .download-card p {
+        font-size: 0.8rem;
+    }
+    
+    .btn-download {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        max-width: 160px;
+    }
+}
+
+@media (max-width: 480px) {
+    .download-popup-content {
+        padding: 1.25rem;
+    }
+    
+    .download-card {
+        min-height: 180px;
+    }
+    
+    .download-card-icon {
+        font-size: 1.75rem;
     }
 }
