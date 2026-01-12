@@ -1,0 +1,22 @@
+# .railwayignore
+node_modules/
+vendor/
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+*.log
+*.sqlite
+*.sqlite-journal
+.env
+.env.*
+.git/
+.DS_Store
+.idea/
+.vscode/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+composer.lock
+package-lock.json
+yarn.lock
