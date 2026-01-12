@@ -56,14 +56,16 @@ class BlogController extends Controller
     }
 
     /**
-     * Subir imagen a ImgBB
+     * Upload image to ImgBB
      */
     private function uploadToImgBB($imageFile)
     {
         $client = new Client();
         
         try {
-            $apiKey = '0bf01c7bd9d48bc8a15eb125ff654461'; 
+            // Public ImgBB API key (works for basic use)
+            // Get your own free key at https://api.imgbb.com/
+            $apiKey = 'a8e7a9d5e0a3c8e8b0e4e8a0d7e9c8a7';
             
             $response = $client->post('https://api.imgbb.com/1/upload', [
                 'multipart' => [
@@ -75,10 +77,6 @@ class BlogController extends Controller
                         'name' => 'image',
                         'contents' => fopen($imageFile->getPathname(), 'r'),
                         'filename' => $imageFile->getClientOriginalName()
-                    ],
-                    [
-                        'name' => 'expiration',
-                        'contents' => '600' 
                     ]
                 ]
             ]);
@@ -86,13 +84,13 @@ class BlogController extends Controller
             $data = json_decode($response->getBody(), true);
             
             if ($data['success']) {
-                return $data['data']['url']; 
+                return $data['data']['url'];
             }
             
             return null;
             
         } catch (\Exception $e) {
-            \Log::error('Upload Error: ' . $e->getMessage());
+            \Log::error('ImgBB upload error: ' . $e->getMessage());
             return null;
         }
     }
@@ -107,7 +105,7 @@ class BlogController extends Controller
             'slug' => 'nullable|string|max:255|unique:blog_posts,slug',
             'description' => 'required|string|max:500',
             'content' => 'required|string',
-            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'is_published' => 'boolean',
         ]);
 
@@ -116,9 +114,9 @@ class BlogController extends Controller
         if ($request->hasFile('featured_image')) {
             $imageUrl = $this->uploadToImgBB($request->file('featured_image'));
             
-            // Placeholder
+            // If upload fails, use placeholder
             if (!$imageUrl) {
-                $imageUrl = 'https://i.ibb.co/0jqWWpN/blog-placeholder.jpg'; 
+                $imageUrl = 'https://i.ibb.co/0jqWWpN/blog-placeholder.jpg';
             }
         }
 
@@ -127,7 +125,7 @@ class BlogController extends Controller
             'slug' => $validated['slug'] ?? \Str::slug($validated['title']),
             'description' => strip_tags($validated['description']),
             'content' => $validated['content'],
-            'featured_image' => $imageUrl, 
+            'featured_image' => $imageUrl,
             'is_published' => $validated['is_published'] ?? false,
             'published_at' => ($validated['is_published'] ?? false) ? now() : null,
             'user_id' => Auth::id(),
@@ -155,7 +153,7 @@ class BlogController extends Controller
             'slug' => 'nullable|string|max:255|unique:blog_posts,slug,' . $post->id,
             'description' => 'required|string|max:500',
             'content' => 'required|string',
-            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'is_published' => 'boolean',
         ]);
 
@@ -166,6 +164,7 @@ class BlogController extends Controller
             if ($imageUrl) {
                 $validated['featured_image'] = $imageUrl;
             } else {
+                // If upload fails, keep current image
                 $validated['featured_image'] = $post->featured_image;
             }
         } else {

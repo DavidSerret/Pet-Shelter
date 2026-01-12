@@ -53,7 +53,7 @@
     @endif
     
     <input type="file" id="featured_image" name="featured_image" class="form-control"
-           accept="image/jpeg,image/png,image/jpg,image/gif">
+        accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
     
     <div id="new-image-preview-container" style="{{ isset($post) && $post->featured_image ? 'display: none;' : '' }}">
         <img id="new-image-preview" src="#" alt="New image preview" class="image-preview" style="display: none;">

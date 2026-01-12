@@ -27,6 +27,9 @@ class BlogPost extends Model
         'published_at' => 'datetime',
     ];
 
+    /**
+     * Get the user that created the blog post.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -41,22 +44,23 @@ class BlogPost extends Model
             return asset('assets/blog-placeholder.jpg');
         }
         
+        // If it's already a URL (from ImgBB), return it directly
         if (filter_var($this->featured_image, FILTER_VALIDATE_URL)) {
             return $this->featured_image;
         }
         
+        // For backward compatibility with old base64 images
         if (str_starts_with($this->featured_image, 'data:image')) {
             return $this->featured_image;
         }
         
-        if (base64_decode($this->featured_image, true)) {
-            return 'data:image/jpeg;base64,' . $this->featured_image;
-        }
-        
-        // Default Placeholder
+        // Default to placeholder
         return asset('assets/blog-placeholder.jpg');
     }
 
+    /**
+     * Generate slug from title before creating.
+     */
     protected static function boot()
     {
         parent::boot();
@@ -74,12 +78,18 @@ class BlogPost extends Model
         });
     }
 
+    /**
+     * Scope for published posts.
+     */
     public function scopePublished($query)
     {
         return $query->where('is_published', true)
             ->whereNotNull('published_at');
     }
 
+    /**
+     * Scope for draft posts.
+     */
     public function scopeDraft($query)
     {
         return $query->where('is_published', false)
