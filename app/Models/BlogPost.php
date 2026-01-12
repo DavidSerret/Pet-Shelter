@@ -41,10 +41,22 @@ class BlogPost extends Model
     public function getFeaturedImageUrlAttribute(): ?string
     {
         if (!$this->featured_image) {
-            return null;
+            return asset('assets/blog-placeholder.jpg');
         }
         
-        return asset('storage/' . $this->featured_image);
+        if (str_starts_with($this->featured_image, 'data:image')) {
+            return $this->featured_image;
+        }
+        
+        if (base64_encode(base64_decode($this->featured_image, true)) === $this->featured_image) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_buffer($finfo, base64_decode($this->featured_image));
+            finfo_close($finfo);
+            
+            return 'data:' . $mimeType . ';base64,' . $this->featured_image;
+        }
+        
+        return $this->featured_image;
     }
 
     /**

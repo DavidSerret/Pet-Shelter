@@ -71,10 +71,11 @@ class BlogController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        // Handle image upload
-        $imagePath = null;
+        // Handle image upload - Convert to base64
+        $imageBase64 = null;
         if ($request->hasFile('featured_image')) {
-            $imagePath = $request->file('featured_image')->store('blog-images', 'public');
+            $image = $request->file('featured_image');
+            $imageBase64 = base64_encode(file_get_contents($image->getRealPath()));
         }
 
         $post = BlogPost::create([
@@ -82,7 +83,7 @@ class BlogController extends Controller
             'slug' => $validated['slug'] ?? \Str::slug($validated['title']),
             'description' => strip_tags($validated['description']),
             'content' => $validated['content'],
-            'featured_image' => $imagePath,
+            'featured_image' => $imageBase64, 
             'is_published' => $validated['is_published'] ?? false,
             'published_at' => ($validated['is_published'] ?? false) ? now() : null,
             'user_id' => Auth::id(),
@@ -114,14 +115,11 @@ class BlogController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        // Handle image upload
+        // Handle image upload - Convert to base64
         if ($request->hasFile('featured_image')) {
-            // Delete old image if exists
-            if ($post->featured_image) {
-                Storage::disk('public')->delete($post->featured_image);
-            }
-            $imagePath = $request->file('featured_image')->store('blog-images', 'public');
-            $validated['featured_image'] = $imagePath;
+            $image = $request->file('featured_image');
+            $imageBase64 = base64_encode(file_get_contents($image->getRealPath()));
+            $validated['featured_image'] = $imageBase64;
         } else {
             // Keep existing image
             $validated['featured_image'] = $post->featured_image;
@@ -162,11 +160,6 @@ class BlogController extends Controller
      */
     public function destroy(BlogPost $post)
     {
-        // Delete image if exists
-        if ($post->featured_image) {
-            Storage::disk('public')->delete($post->featured_image);
-        }
-        
         $post->delete();
         
         return redirect()->route('admin.blog.index')
