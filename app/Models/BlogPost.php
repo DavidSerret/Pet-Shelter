@@ -27,9 +27,6 @@ class BlogPost extends Model
         'published_at' => 'datetime',
     ];
 
-    /**
-     * Get the user that created the blog post.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -38,30 +35,28 @@ class BlogPost extends Model
     /**
      * Get the featured image URL.
      */
-    public function getFeaturedImageUrlAttribute(): ?string
+    public function getFeaturedImageUrlAttribute(): string
     {
         if (!$this->featured_image) {
             return asset('assets/blog-placeholder.jpg');
+        }
+        
+        if (filter_var($this->featured_image, FILTER_VALIDATE_URL)) {
+            return $this->featured_image;
         }
         
         if (str_starts_with($this->featured_image, 'data:image')) {
             return $this->featured_image;
         }
         
-        if (base64_encode(base64_decode($this->featured_image, true)) === $this->featured_image) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mimeType = finfo_buffer($finfo, base64_decode($this->featured_image));
-            finfo_close($finfo);
-            
-            return 'data:' . $mimeType . ';base64,' . $this->featured_image;
+        if (base64_decode($this->featured_image, true)) {
+            return 'data:image/jpeg;base64,' . $this->featured_image;
         }
         
-        return $this->featured_image;
+        // Default Placeholder
+        return asset('assets/blog-placeholder.jpg');
     }
 
-    /**
-     * Generate slug from title before creating.
-     */
     protected static function boot()
     {
         parent::boot();
@@ -79,18 +74,12 @@ class BlogPost extends Model
         });
     }
 
-    /**
-     * Scope for published posts.
-     */
     public function scopePublished($query)
     {
         return $query->where('is_published', true)
             ->whereNotNull('published_at');
     }
 
-    /**
-     * Scope for draft posts.
-     */
     public function scopeDraft($query)
     {
         return $query->where('is_published', false)

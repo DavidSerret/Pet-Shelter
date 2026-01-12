@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BlogPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use GuzzleHttp\Client;
 
 class BlogController extends Controller
 {
@@ -27,12 +27,10 @@ class BlogController extends Controller
      */
     public function show(BlogPost $post)
     {
-        // Ensure only published posts are visible to non-admins
         if (!$post->is_published && !Auth::user()?->isAdmin()) {
             abort(404);
         }
         
-        // Also check published_at for consistency
         if (!$post->published_at && !Auth::user()?->isAdmin()) {
             abort(404);
         }
@@ -58,6 +56,48 @@ class BlogController extends Controller
     }
 
     /**
+     * Subir imagen a ImgBB
+     */
+    private function uploadToImgBB($imageFile)
+    {
+        $client = new Client();
+        
+        try {
+            $apiKey = '0bf01c7bd9d48bc8a15eb125ff654461'; 
+            
+            $response = $client->post('https://api.imgbb.com/1/upload', [
+                'multipart' => [
+                    [
+                        'name' => 'key',
+                        'contents' => $apiKey
+                    ],
+                    [
+                        'name' => 'image',
+                        'contents' => fopen($imageFile->getPathname(), 'r'),
+                        'filename' => $imageFile->getClientOriginalName()
+                    ],
+                    [
+                        'name' => 'expiration',
+                        'contents' => '600' 
+                    ]
+                ]
+            ]);
+            
+            $data = json_decode($response->getBody(), true);
+            
+            if ($data['success']) {
+                return $data['data']['url']; 
+            }
+            
+            return null;
+            
+        } catch (\Exception $e) {
+            \Log::error('Upload Error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Store new blog post
      */
     public function store(Request $request)
@@ -71,11 +111,15 @@ class BlogController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        // Handle image upload - Convert to base64
-        $imageBase64 = null;
+        // Handle image upload
+        $imageUrl = null;
         if ($request->hasFile('featured_image')) {
-            $image = $request->file('featured_image');
-            $imageBase64 = base64_encode(file_get_contents($image->getRealPath()));
+            $imageUrl = $this->uploadToImgBB($request->file('featured_image'));
+            
+            // Placeholder
+            if (!$imageUrl) {
+                $imageUrl = 'https://i.ibb.co/0jqWWpN/blog-placeholder.jpg'; 
+            }
         }
 
         $post = BlogPost::create([
@@ -83,7 +127,7 @@ class BlogController extends Controller
             'slug' => $validated['slug'] ?? \Str::slug($validated['title']),
             'description' => strip_tags($validated['description']),
             'content' => $validated['content'],
-            'featured_image' => $imageBase64, 
+            'featured_image' => $imageUrl, 
             'is_published' => $validated['is_published'] ?? false,
             'published_at' => ($validated['is_published'] ?? false) ? now() : null,
             'user_id' => Auth::id(),
@@ -115,11 +159,15 @@ class BlogController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        // Handle image upload - Convert to base64
+        // Handle image upload
         if ($request->hasFile('featured_image')) {
-            $image = $request->file('featured_image');
-            $imageBase64 = base64_encode(file_get_contents($image->getRealPath()));
-            $validated['featured_image'] = $imageBase64;
+            $imageUrl = $this->uploadToImgBB($request->file('featured_image'));
+            
+            if ($imageUrl) {
+                $validated['featured_image'] = $imageUrl;
+            } else {
+                $validated['featured_image'] = $post->featured_image;
+            }
         } else {
             // Keep existing image
             $validated['featured_image'] = $post->featured_image;
@@ -144,7 +192,6 @@ class BlogController extends Controller
         } elseif ($isUnpublishing) {
             $updateData['published_at'] = null;
         } else {
-            // Keep existing published_at if already published
             $updateData['published_at'] = $post->published_at;
         }
 
