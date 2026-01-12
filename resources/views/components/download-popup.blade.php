@@ -28,9 +28,9 @@
                 </div>
                 <h4>Source Code</h4>
                 <p>Complete Laravel project for Happinest (ZIP)</p>
-                <a href="https://github.com/DavidSerret/Pet-Shelter/archive/refs/heads/main.zip" 
+                <a href="https://github.com/DavidSerret/Pet-Shelter/releases/download/code/Pet-Shelter.zip" 
                    class="btn-download" 
-                   download="Pet-Shelter-Source-Code.zip"
+                   download="Pet-Shelter-Complete.zip"
                    id="downloadCodeBtn"
                    target="_blank">
                    <span class="download-icon">↓</span> Download ZIP
