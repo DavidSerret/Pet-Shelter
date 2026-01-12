@@ -65,7 +65,7 @@ class BlogController extends Controller
         try {
             // Public ImgBB API key (works for basic use)
             // Get your own free key at https://api.imgbb.com/
-            $apiKey = 'a8e7a9d5e0a3c8e8b0e4e8a0d7e9c8a7';
+            $apiKey = '0bf01c7bd9d48bc8a15eb125ff654461';
             
             $response = $client->post('https://api.imgbb.com/1/upload', [
                 'multipart' => [
