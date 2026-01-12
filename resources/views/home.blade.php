@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="{{ asset('css/home.css') }}">
         <link rel="preload" as="image" href="{{ asset('assets/Front-image.png') }}">
         <script src="{{ asset('js/home_filter.js') }}" defer></script>
-        <script src="{{ asset('js/download-popup.js') }}" defer></script>
+        
 
     </head>
     <body>
@@ -104,6 +104,5 @@
 
     
           @include('components.footer')
-          @include('components.download-popup')
     </body>
 </html>
