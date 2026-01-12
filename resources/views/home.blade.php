@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html>
-
     <head>
         <meta charset="utf-8" />
         <title>Home Page</title>
         <link rel="stylesheet" href="{{ asset('css/style.css') }}">
         <link rel="stylesheet" href="{{ asset('css/header.css') }}">
         <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/download-popup.css') }}">
         <link rel="preload" as="image" href="{{ asset('assets/Front-image.png') }}">
         <script src="{{ asset('js/home_filter.js') }}" defer></script>
-        
-
+        <script src="{{ asset('js/download-popup.js') }}" defer></script>
     </head>
     <body>
+        @include('components.header')
         
-         @include('components.header')
-
         <main>
             <section class="hero-frontpage">
                 <img src="{{ asset('assets/Front-image.png') }}" id="frontpage-hero-image" alt="Cuddling cat and dog">
@@ -101,8 +99,8 @@
                 <div class="cards" id="cards"></div>
             </section>
         </main>
-
     
-          @include('components.footer')
+        @include('components.footer')
+        @include('components.download-popup')
     </body>
 </html>
