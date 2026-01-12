@@ -1,52 +1,62 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Download popup script loaded');
+    
     const popup = document.getElementById('downloadPopup');
     const closeBtn = document.getElementById('closePopup');
     const dontShowAgainCheckbox = document.getElementById('dontShowAgain');
-    const downloadGuideBtn = document.getElementById('downloadGuideBtn');
-    const downloadCodeBtn = document.getElementById('downloadCodeBtn');
+    
+    if (!popup) {
+        console.error('Popup element not found!');
+        return;
+    }
+    
+    console.log('Popup element found:', popup);
     
     // Check if on homepage
     const isHomepage = window.location.pathname === '/' || 
                        window.location.pathname === '/home' || 
                        window.location.pathname === '';
     
+    console.log('Is homepage?', isHomepage);
+    
     // Check if popup should be shown
     const shouldShowPopup = () => {
-        if (!isHomepage) return false;
+        if (!isHomepage) {
+            console.log('Not on homepage, not showing popup');
+            return false;
+        }
         
         const dontShowAgain = localStorage.getItem('downloadPopupDisabled');
+        console.log('LocalStorage value:', dontShowAgain);
         return !dontShowAgain;
     };
     
     // Show popup
     const showPopup = () => {
-        if (popup) {
-            popup.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
+        console.log('Showing popup');
+        popup.style.display = 'flex';
+        // document.body.style.overflow = 'hidden';
     };
     
     // Hide popup
     const hidePopup = () => {
-        if (popup) {
-            popup.style.display = 'none';
-            document.body.style.overflow = '';
-        }
+        console.log('Hiding popup');
+        popup.style.display = 'none';
+        // document.body.style.overflow = '';
     };
     
     // Close popup when clicking X
     if (closeBtn) {
         closeBtn.addEventListener('click', hidePopup);
+        console.log('Close button event listener added');
     }
     
     // Close popup when clicking outside
-    if (popup) {
-        popup.addEventListener('click', function(e) {
-            if (e.target === this) {
-                hidePopup();
-            }
-        });
-    }
+    popup.addEventListener('click', function(e) {
+        if (e.target === this) {
+            hidePopup();
+        }
+    });
     
     // Handle "Don't show again" checkbox
     if (dontShowAgainCheckbox) {
@@ -59,68 +69,53 @@ document.addEventListener('DOMContentLoaded', function() {
         dontShowAgainCheckbox.addEventListener('change', function() {
             if (this.checked) {
                 localStorage.setItem('downloadPopupDisabled', 'true');
+                console.log('Popup disabled in localStorage');
             } else {
                 localStorage.removeItem('downloadPopupDisabled');
+                console.log('Popup enabled in localStorage');
             }
         });
     }
     
-    // Track downloads and auto-check checkbox
-    const trackDownload = (e) => {
-        // Prevent default to ensure checkbox is checked before redirect
-        e.preventDefault();
+    // Track downloads
+    const trackDownload = (event) => {
+        console.log('Download clicked');
         
-        // Mark checkbox and save to localStorage
-        dontShowAgainCheckbox.checked = true;
-        localStorage.setItem('downloadPopupDisabled', 'true');
+        // Mark checkbox
+        if (dontShowAgainCheckbox) {
+            dontShowAgainCheckbox.checked = true;
+            localStorage.setItem('downloadPopupDisabled', 'true');
+        }
         
-        // Get the URL and open in new tab
-        const url = e.currentTarget.href;
-        window.open(url, '_blank');
+        // Hide popup immediately
+        hidePopup();
         
-        // Hide popup
-        setTimeout(hidePopup, 300);
-        
-        // Return false to prevent default anchor behavior
-        return false;
+        // Allow default download behavior
+        // No preventDefault, no window.open
+        return true;
     };
     
-    // Track when user downloads files
+    // Add download tracking
+    const downloadGuideBtn = document.getElementById('downloadGuideBtn');
+    const downloadCodeBtn = document.getElementById('downloadCodeBtn');
+    
     if (downloadGuideBtn) {
         downloadGuideBtn.addEventListener('click', trackDownload);
+        console.log('Guide download button listener added');
     }
     
     if (downloadCodeBtn) {
         downloadCodeBtn.addEventListener('click', trackDownload);
-    }
-    
-    // Alternative: Use mouseup for better tracking
-    const trackDownloadAlternative = (e) => {
-        // Only track left clicks
-        if (e.button !== 0) return;
-        
-        dontShowAgainCheckbox.checked = true;
-        localStorage.setItem('downloadPopupDisabled', 'true');
-        
-        // Small delay to ensure localStorage is saved
-        setTimeout(() => {
-            hidePopup();
-        }, 100);
-    };
-    
-    // Add mouseup listener as backup
-    if (downloadGuideBtn) {
-        downloadGuideBtn.addEventListener('mouseup', trackDownloadAlternative);
-    }
-    
-    if (downloadCodeBtn) {
-        downloadCodeBtn.addEventListener('mouseup', trackDownloadAlternative);
+        console.log('Code download button listener added');
     }
     
     // Show popup on homepage load
     if (shouldShowPopup()) {
+        console.log('Should show popup, scheduling...');
         // Small delay to let page load first
-        setTimeout(showPopup, 1000);
+        setTimeout(showPopup, 1500);
+    } else {
+        console.log('Popup should NOT be shown');
     }
     
     // Handle Escape key to close popup
@@ -130,11 +125,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Optional: Add a button to manually show the popup
+    // Create trigger button
     const createPopupTrigger = () => {
+        // Check if button already exists
+        if (document.getElementById('popupTriggerBtn')) return;
+        
         const triggerBtn = document.createElement('button');
         triggerBtn.innerHTML = '📥 Free Resources';
         triggerBtn.id = 'popupTriggerBtn';
+        triggerBtn.type = 'button';
         triggerBtn.style.cssText = `
             position: fixed;
             bottom: 20px;
@@ -149,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
             font-weight: 600;
             box-shadow: 0 4px 15px rgba(172,85,18,0.3);
             transition: all 0.3s ease;
+            font-family: inherit;
         `;
         
         triggerBtn.addEventListener('mouseenter', () => {
@@ -161,16 +161,24 @@ document.addEventListener('DOMContentLoaded', function() {
             triggerBtn.style.boxShadow = '0 4px 15px rgba(172,85,18,0.3)';
         });
         
-        triggerBtn.addEventListener('click', () => {
+        triggerBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             // Temporarily enable popup
             localStorage.removeItem('downloadPopupDisabled');
-            dontShowAgainCheckbox.checked = false;
+            if (dontShowAgainCheckbox) {
+                dontShowAgainCheckbox.checked = false;
+            }
             showPopup();
         });
         
         document.body.appendChild(triggerBtn);
+        console.log('Trigger button created');
     };
     
     // Add trigger button after a delay
-    setTimeout(createPopupTrigger, 2000);
+    setTimeout(createPopupTrigger, 3000);
+    
+    console.log('Download popup script initialized successfully');
 });
