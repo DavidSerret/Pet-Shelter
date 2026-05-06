@@ -1,17 +1,28 @@
+# fly.toml app configuration file generated for happinest on 2026-05-06T12:26:24+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'happinest'
-primary_region = 'mad'
+primary_region = 'ams'
+console_command = 'php /var/www/html/artisan tinker'
 
 [build]
+  [build.args]
+    NODE_VERSION = '18'
+    PHP_VERSION = '8.4'
 
 [env]
-  APP_ENV = 'production'
   APP_DEBUG = 'false'
-  LOG_CHANNEL = 'stderr'
-  LOG_LEVEL = 'error'
-  SESSION_DRIVER = 'database'
+  APP_ENV = 'production'
   CACHE_STORE = 'database'
-  QUEUE_CONNECTION = 'database'
   FILESYSTEM_DISK = 'local'
+  LOG_CHANNEL = 'stderr'
+  LOG_LEVEL = 'info'
+  LOG_STDERR_FORMATTER = 'Monolog\Formatter\JsonFormatter'
+  QUEUE_CONNECTION = 'database'
+  SESSION_DRIVER = 'cookie'
+  SESSION_SECURE_COOKIE = 'true'
 
 [http_service]
   internal_port = 8080
@@ -23,3 +34,5 @@ primary_region = 'mad'
 [[vm]]
   size = 'shared-cpu-1x'
   memory = '256mb'
+  cpus = 1
+  memory_mb = 256
