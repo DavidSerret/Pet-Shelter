@@ -2,7 +2,7 @@
 
 RUN apk add --no-cache nginx curl libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zip unzip nodejs npm supervisor postgresql-dev bash
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install pdo pdo_pgsql pgsql gd zip opcache bcmath pcntl
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install pdo pdo_pgsql pgsql gd zip opcache bcmath pcntl && ln -sf /usr/local/bin/php /usr/bin/php
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
